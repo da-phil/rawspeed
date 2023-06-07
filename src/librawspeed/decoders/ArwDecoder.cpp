@@ -345,11 +345,19 @@ void ArwDecoder::DecodeLJpeg(const TiffIFD* raw) const {
       decoder.decode(tileX * tilew, tileY * tileh, tilew, tileh, false);
     }
 
-  const TiffEntry* size_entry = raw->hasEntry(TiffTag::SONYRAWIMAGESIZE)
-                                    ? raw->getEntry(TiffTag::SONYRAWIMAGESIZE)
-                                    : raw->getEntry(TiffTag::DEFAULTCROPSIZE);
-  iRectangle2D crop(0, 0,
-                    size_entry->getU32(0), size_entry->getU32(1));
+  iRectangle2D crop;
+  if (raw->hasEntry(TiffTag::SONYRAWIMAGESIZE)) {
+    const TiffEntry* size_entry = raw->getEntry(TiffTag::SONYRAWIMAGESIZE);
+    crop = iRectangle2D{0, 0, static_cast<int>(size_entry->getU32(0)),
+                        static_cast<int>(size_entry->getU32(1))};
+  } else {
+    const TiffEntry* origin_entry = raw->getEntry(TiffTag::DEFAULTCROPORIGIN);
+    const TiffEntry* size_entry = raw->getEntry(TiffTag::DEFAULTCROPSIZE);
+    crop = iRectangle2D{static_cast<int>(origin_entry->getU32(0)),
+                        static_cast<int>(origin_entry->getU32(1)),
+                        static_cast<int>(size_entry->getU32(0)),
+                        static_cast<int>(size_entry->getU32(1))};
+  }
   mRaw->subFrame(crop);
 }
 
